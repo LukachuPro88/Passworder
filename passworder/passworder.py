@@ -97,7 +97,7 @@ class Random:
                 pyperclip.copy(password_str)
                 print("Copied!")
             except pyperclip.PyperclipException:
-                print("PyPassword ERROR: Error copying password!")
+                print("Passworder ERROR: Error copying password!")
 
         return password_str
 
@@ -182,7 +182,7 @@ def hash_password(password, file_path):
         with open(file_path, "a") as file:
             file.write(hashed_password + "\n")
     except OSError:
-        print("PyPassword ERROR: Error saving hashed password!")
+        print("Passworder ERROR: Error saving hashed password!")
         return False
 
 def find_password(password, file_path):
@@ -195,5 +195,5 @@ def find_password(password, file_path):
                     return True
         return False
     except FileNotFoundError:
-        print("PyPassword ERROR: Error finding password!")
+        print("Passworder ERROR: Error finding password!")
         return False
