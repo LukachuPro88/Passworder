@@ -1,5 +1,4 @@
 import secrets
-import random as rnd
 import string
 import pyperclip
 import sys
@@ -54,7 +53,11 @@ class Random:
         for _ in range(remaining_length):
             password_chars.append(secrets.choice(chars))
 
-        rnd.shuffle(password_chars)
+        while True:
+            password_chars = _secure_shuffle(password_chars)
+            if _avoid_repeats("".join(password_chars)):
+                break
+
         password_str = "".join(password_chars)
 
         if copy:
@@ -69,7 +72,12 @@ class Random:
     @staticmethod
     def number_password(length, copy=True):
         #   GENERATE A RANDOM PASSWORD WITH ONLY NUMBERS
-        password_chars = [str(secrets.randbelow(10)) for _ in range(length)]
+
+        while True:
+            password_chars = [str(secrets.randbelow(10)) for _ in range(length)]
+            if _avoid_repeats("".join(password_chars)):
+                break
+
         password_str = "".join(password_chars)
 
         if copy:
@@ -116,7 +124,10 @@ class Random:
         for _ in range(remaining_length):
             password_chars.append(secrets.choice(chars))
 
-        rnd.shuffle(password_chars)
+        while True:
+            password_chars = _secure_shuffle(password_chars)
+            if _avoid_repeats("".join(password_chars)):
+                break
         password_str = "".join(password_chars)
 
         if copy:
@@ -130,47 +141,48 @@ class Random:
     
     @staticmethod
     def pronouncable_password(length, uppercase=True, lowercase=True, symbols=True, digits=True, copy=True, utf_8=False):
-        #   GENERATE A PRONOUNCABLE PASSWORD template(CVCVCV) C = Consonant, V = Vowel
-        password_chars = []
-        use_consonant = True
+        # GENERATE A PRONOUNCABLE PASSWORD template (CVCVCV) C = Consonant, V = Vowel
+        while True:
+            password_chars = []
+            use_consonant = True
 
-        while len(password_chars) < length:
-            char_pool = ""
-            if use_consonant:
-                char_pool = consonants
-                if utf_8 and uppercase:
-                    char_pool += utf_8_upper
-                elif utf_8 and lowercase:
-                    char_pool += utf_8_lower
-            else:
-                char_pool = vowels
-                if utf_8 and uppercase:
-                    char_pool += utf_8_upper
-                elif utf_8 and lowercase:
-                    char_pool += utf_8_lower
+            while len(password_chars) < length:
+                char_pool = ""
+                if use_consonant:
+                    char_pool = consonants
+                    if utf_8 and uppercase:
+                        char_pool += utf_8_upper
+                    elif utf_8 and lowercase:
+                        char_pool += utf_8_lower
+                else:
+                    char_pool = vowels
+                    if utf_8 and uppercase:
+                        char_pool += utf_8_upper
+                    elif utf_8 and lowercase:
+                        char_pool += utf_8_lower
 
-            if char_pool:
-                password_chars.append(secrets.choice(char_pool))
-            use_consonant = not use_consonant
+                if char_pool:
+                    password_chars.append(secrets.choice(char_pool))
+                use_consonant = not use_consonant
 
-        extras = []
-        if digits:
-            extras.append(secrets.choice(string.digits))
-        if symbols:
-            extras.append(secrets.choice(string.punctuation))
+            extras = []
+            if digits:
+                extras.append(secrets.choice(string.digits))
+            if symbols:
+                extras.append(secrets.choice(string.punctuation))
 
-        password_chars += extras
+            password_chars += extras
+            password_chars = _secure_shuffle(password_chars)
+            password_str = "".join(password_chars[:length])
 
-        password_str = "".join(password_chars[:length])
-
-        if copy:
-            try:
-                pyperclip.copy(password_str)
-                print("Copied!")
-            except pyperclip.PyperclipException:
-                print("Passworder ERROR: Error copying password!")
-
-        return password_str
+            if _avoid_repeats(password_str):
+                if copy:
+                    try:
+                        pyperclip.copy(password_str)
+                        print("Copied!")
+                    except pyperclip.PyperclipException:
+                        print("Passworder ERROR: Error copying password!")
+                return password_str
 
 def password_strength(password):
     #   CALCULATE PASSWORD STRENGTH
@@ -180,7 +192,11 @@ def password_strength(password):
     symbols = 0
 
     for char in password:
-        if char.isupper():
+        if char in utf_8_upper:
+            uppercase_letters += 1
+        elif char in utf_8_lower:
+            lowercase_letters += 1
+        elif char.isupper():
             uppercase_letters += 1
         elif char.islower():
             lowercase_letters += 1
@@ -292,3 +308,25 @@ def find_password(password, file_path):
     except FileNotFoundError:
         print("Passworder ERROR: Error finding password!")
         return False
+
+def _avoid_repeats(password: str, max_repeat: int = 3):
+    count = 1
+    for i in range(1, len(password)):
+        if password[i] == password[i - 1]:
+            count += 1
+            if count > max_repeat:
+                return False
+        else:
+            count = 1
+    return True
+
+
+def _secure_shuffle(chars):
+    is_string = isinstance(chars, str)
+    lst = list(chars)
+
+    for i in range(len(lst) - 1, 0, -1):
+        j = secrets.randbelow(i + 1)
+        lst[i], lst[j] = lst[j], lst[i]
+
+    return "".join(lst) if is_string else lst

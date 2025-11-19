@@ -3,7 +3,8 @@ from .passworder import (
     password_strength,
     password_input,
     hash_password,
-    find_password
+    find_password,
+    pronouncable_password
 )
 
 __all__ = [
@@ -11,5 +12,6 @@ __all__ = [
     "password_strength",
     "password_input",
     "hash_password",
-    "find_password"
+    "find_password",
+    "pronouncable_password"
 ]
