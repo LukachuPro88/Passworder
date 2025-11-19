@@ -1,38 +1,58 @@
+import secrets
 import random as rnd
 import string
 import pyperclip
 import sys
-import tty
-import termios
 import hashlib
+
+utf_8_upper = "ÄÖÅ"
+utf_8_lower = "äöå"
+utf_8_chars = utf_8_upper + utf_8_lower
+
+vowels = "aeiouyäöåAEIOUYÄÖÅ"
+consonants = "bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ"
+
+if sys.platform == "win32":
+    import msvcrt   #   WINDOWS
+else:
+    import tty      #   LINUX / MACOS
+    import termios
 
 strong_chars = string.punctuation
 
 class Random:
     @staticmethod
-    def string_password(length, uppercase=True, lowercase=True, symbols=True, copy=True):
+    def string_password(length, uppercase=True, lowercase=True, symbols=True, copy=True, utf_8=False):
+        #   GENERATE A RANDOM PASSWORD WITH ONLY STRINGS
         chars = ""
+    
         if uppercase:
             chars += string.ascii_uppercase
+            if utf_8:
+                chars += utf_8_upper
         if lowercase:
             chars += string.ascii_lowercase
+            if utf_8:
+                chars += utf_8_lower
         if symbols:
             chars += string.punctuation
+
         if not chars:
             chars = string.ascii_letters
 
         password_chars = []
-
         if uppercase:
-            password_chars.append(rnd.choice(string.ascii_uppercase))
+            password_chars.append(secrets.choice(string.ascii_uppercase + (utf_8_upper if utf_8 else "")))
         if lowercase:
-            password_chars.append(rnd.choice(string.ascii_lowercase))
+            password_chars.append(secrets.choice(string.ascii_lowercase + (utf_8_lower if utf_8 else "")))
         if symbols:
-            password_chars.append(rnd.choice(string.punctuation))
+            password_chars.append(secrets.choice(string.punctuation))
+        if utf_8:
+            password_chars.append(secrets.choice(utf_8_chars))
 
-        remaining_length = length - len(password_chars)
+        remaining_length = max(length - len(password_chars), 0)
         for _ in range(remaining_length):
-            password_chars.append(rnd.choice(chars))
+            password_chars.append(secrets.choice(chars))
 
         rnd.shuffle(password_chars)
         password_str = "".join(password_chars)
@@ -48,7 +68,8 @@ class Random:
 
     @staticmethod
     def number_password(length, copy=True):
-        password_chars = [str(rnd.randint(0, 9)) for _ in range(length)]
+        #   GENERATE A RANDOM PASSWORD WITH ONLY NUMBERS
+        password_chars = [str(secrets.randbelow(10)) for _ in range(length)]
         password_str = "".join(password_chars)
 
         if copy:
@@ -61,12 +82,17 @@ class Random:
         return password_str
 
     @staticmethod
-    def password(length, uppercase=True, lowercase=True, symbols=True, digits=True, copy=True):
+    def password(length, uppercase=True, lowercase=True, symbols=True, digits=True, copy=True, utf_8=False):
+        #   GENERATE A RANDOM PASSWORD INCLUDING EVERYTHING
         chars = ""
         if uppercase:
             chars += string.ascii_uppercase
+            if utf_8:
+                chars += utf_8_upper
         if lowercase:
             chars += string.ascii_lowercase
+            if utf_8:
+                chars += utf_8_lower
         if symbols:
             chars += string.punctuation
         if digits:
@@ -75,19 +101,20 @@ class Random:
             chars = string.ascii_letters
 
         password_chars = []
-
         if uppercase:
-            password_chars.append(rnd.choice(string.ascii_uppercase))
+            password_chars.append(secrets.choice(string.ascii_uppercase))
         if lowercase:
-            password_chars.append(rnd.choice(string.ascii_lowercase))
+            password_chars.append(secrets.choice(string.ascii_lowercase))
         if digits:
-            password_chars.append(rnd.choice(string.digits))
+            password_chars.append(secrets.choice(string.digits))
         if symbols:
-            password_chars.append(rnd.choice(string.punctuation))
+            password_chars.append(secrets.choice(string.punctuation))
+        if utf_8:
+            password_chars.append(secrets.choice(utf_8_chars))
 
-        remaining_length = length - len(password_chars)
+        remaining_length = max(length - len(password_chars), 0)
         for _ in range(remaining_length):
-            password_chars.append(rnd.choice(chars))
+            password_chars.append(secrets.choice(chars))
 
         rnd.shuffle(password_chars)
         password_str = "".join(password_chars)
@@ -100,8 +127,53 @@ class Random:
                 print("Passworder ERROR: Error copying password!")
 
         return password_str
+    
+    @staticmethod
+    def pronouncable_password(length, uppercase=True, lowercase=True, symbols=True, digits=True, copy=True, utf_8=False):
+        #   GENERATE A PRONOUNCABLE PASSWORD template(CVCVCV) C = Consonant, V = Vowel
+        password_chars = []
+        use_consonant = True
+
+        while len(password_chars) < length:
+            char_pool = ""
+            if use_consonant:
+                char_pool = consonants
+                if utf_8 and uppercase:
+                    char_pool += utf_8_upper
+                elif utf_8 and lowercase:
+                    char_pool += utf_8_lower
+            else:
+                char_pool = vowels
+                if utf_8 and uppercase:
+                    char_pool += utf_8_upper
+                elif utf_8 and lowercase:
+                    char_pool += utf_8_lower
+
+            if char_pool:
+                password_chars.append(secrets.choice(char_pool))
+            use_consonant = not use_consonant
+
+        extras = []
+        if digits:
+            extras.append(secrets.choice(string.digits))
+        if symbols:
+            extras.append(secrets.choice(string.punctuation))
+
+        password_chars += extras
+
+        password_str = "".join(password_chars[:length])
+
+        if copy:
+            try:
+                pyperclip.copy(password_str)
+                print("Copied!")
+            except pyperclip.PyperclipException:
+                print("Passworder ERROR: Error copying password!")
+
+        return password_str
 
 def password_strength(password):
+    #   CALCULATE PASSWORD STRENGTH
     uppercase_letters = 0
     lowercase_letters = 0
     numbers = 0
@@ -120,7 +192,6 @@ def password_strength(password):
             symbols += 1
 
     score = 0
-
     if uppercase_letters > 0:
         score += 1
     if lowercase_letters > 0:
@@ -148,35 +219,59 @@ def password_strength(password):
         return "Very Strong"
 
 def password_input(prompt=""):
+    #   GET A HIDDEN PASSWORD INPUT
     sys.stdout.write(prompt)
     sys.stdout.flush()
-
     password = ""
-    fd = sys.stdin.fileno()
-    old_settings = termios.tcgetattr(fd)
+    if sys.platform == "win32":
 
-    try:
-        tty.setraw(fd)
+        #   WINDOWS
         while True:
-            ch = sys.stdin.read(1)
-            if ch in ("\n", "\r"):
+            ch = msvcrt.getch()
+            if ch in {b"\r", b"\n"}:
                 break
-            elif ch == "\x7f":
+            elif ch in {b"\x08", b"\x7f"}:
                 if password:
                     password = password[:-1]
                     sys.stdout.write("\b \b")
                     sys.stdout.flush()
             else:
-                password += ch
+                try:
+                    char = ch.decode()
+                except:
+                    continue
+                password += char
                 sys.stdout.write("*")
                 sys.stdout.flush()
-    finally:
-        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
         print()
+        return password
+    else:
 
-    return password
+        # LINUX / MACOS
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        try:
+            tty.setraw(fd)
+            while True:
+                ch = sys.stdin.read(1)
+                if ch in ("\n", "\r"):
+                    break
+                elif ch == "\x7f":
+                    if password:
+                        password = password[:-1]
+                        sys.stdout.write("\b \b")
+                        sys.stdout.flush()
+                else:
+                    password += ch
+                    sys.stdout.write("*")
+                    sys.stdout.flush()
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+            print()
+        return password
 
 def hash_password(password, file_path):
+    #   HASH A PASSWORD
     hashed_password = hashlib.sha256(password.encode()).hexdigest()
     try:
         with open(file_path, "a") as file:
@@ -186,8 +281,8 @@ def hash_password(password, file_path):
         return False
 
 def find_password(password, file_path):
+    #   FIND A PASSWORD
     hashed = hashlib.sha256(password.encode()).hexdigest()
-
     try:
         with open(file_path, "r") as f:
             for line in f:
