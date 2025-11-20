@@ -160,7 +160,7 @@ class Random:
     def pronouncable_password(length:int, uppercase:bool=True, lowercase:bool=True,
                               symbols:bool=True,digits:bool=True,copy:bool=True,
                               utf_8:bool=False,batch_passwords:int=1) -> Union[str,List[str]]:
-        def _generate_one() -> str:
+        def _generate_one() -> str:     
             while True:
                 password_chars = []
                 use_consonant = True
@@ -208,56 +208,31 @@ class Random:
             return pw
         else:
             return [_generate_one() for _ in range(batch_passwords)]
+        
+    @staticmethod
+    def custom_password(custom_chars:Union[str,List[str]], length:int,
+                        copy:bool=True, batch_passwords:int=1) -> Union[str,List[str]]:
+        #   GENERATE A RANDOM PASSWORD WITH CUSTOM CHARACTERS ONLY
 
-def password_strength(password:str) -> str:
-    #   CALCULATE PASSWORD STRENGTH
-    uppercase_letters = 0
-    lowercase_letters = 0
-    numbers = 0
-    symbols = 0
+        def _generate_one() -> str:
+            while True:
+                password_chars = [secrets.choice(custom_chars) for _ in range(length)]
+                if _avoid_repeats("".join(password_chars)):
+                    break
+            return "".join(password_chars)
 
-    for char in password:
-        if char in utf_8_upper:
-            uppercase_letters += 1
-        elif char in utf_8_lower:
-            lowercase_letters += 1
-        elif char.isupper():
-            uppercase_letters += 1
-        elif char.islower():
-            lowercase_letters += 1
-        elif char.isdigit():
-            numbers += 1
-        elif char in strong_chars:
-            symbols += 1
+        if batch_passwords == 1:
+            pw = _generate_one()
+            if copy:
+                try:
+                    pyperclip.copy(pw)
+                    print("Copied!")
+                except pyperclip.PyperclipException:
+                    print("Passworder ERROR: Error copying password!")
+            return pw
         else:
-            symbols += 1
-
-    score = 0
-    if uppercase_letters > 0:
-        score += 1
-    if lowercase_letters > 0:
-        score += 1
-    if numbers > 0:
-        score += 1
-    if symbols > 0:
-        score += 2
-
-    length = len(password)
-    if length >= 16:
-        score += 3
-    elif length >= 12:
-        score += 2
-    elif length >= 8:
-        score += 1
-
-    if score <= 3:
-        return "Weak"
-    elif 4 <= score <= 5:
-        return "Normal"
-    elif 6 <= score <= 7:
-        return "Strong"
-    else:
-        return "Very Strong"
+            pw_list = [_generate_one() for _ in range(batch_passwords)]
+            return pw_list
 
 def password_input(prompt:str="") -> str:
     #   GET A HIDDEN PASSWORD INPUT
@@ -311,29 +286,111 @@ def password_input(prompt:str="") -> str:
             print()
         return password
 
-def hash_password(password:str,file_path:str) -> Optional[bool]:
-    #   HASH A PASSWORD
-    hashed_password = hashlib.sha256(password.encode()).hexdigest()
-    try:
-        with open(file_path, "a") as file:
-            file.write(hashed_password + "\n")
-    except OSError:
-        print("Passworder ERROR: Error saving hashed password!")
-        return False
+class Backend:
+    #   BACKEND FUNCTIONS
+    def __init__(self, password: Optional[str] = None, found: bool = True, data: Optional[str] = None):
+        self.password = password
+        self.found = found
+        self.data = data
 
-def find_password(password:str,file_path:str) -> bool:
-    #   FIND A PASSWORD
-    hashed = hashlib.sha256(password.encode()).hexdigest()
-    try:
-        with open(file_path, "r") as f:
-            for line in f:
-                if line.strip() == hashed:
-                    return True
-        return False
-    except FileNotFoundError:
-        print("Passworder ERROR: Error finding password!")
-        return False
+    def brute_force_protection(self, max_attempts: int = 3):
+        if not self.found or self.password is None:
+            print("Password not found — brute force protection disabled.")
+            return self
 
+        attempts = 0
+        while attempts < max_attempts:
+            user_input = password_input("Enter Password: ")
+            if user_input == self.password:
+                print("Access Granted!")
+                return self
+            else:
+                attempts += 1
+                print(f"Incorrect Password! {max_attempts - attempts} attempts left.")
+
+        print("Access Denied!")
+        return self
+
+    def __str__(self):
+        return self.password if self.password is not None else "NOT FOUND"
+
+
+    @staticmethod
+    def password_strength(password:str) -> str:
+        #   CALCULATE PASSWORD STRENGTH
+        uppercase_letters = 0
+        lowercase_letters = 0
+        numbers = 0
+        symbols = 0
+
+        for char in password:
+            if char in utf_8_upper:
+                uppercase_letters += 1
+            elif char in utf_8_lower:
+                lowercase_letters += 1
+            elif char.isupper():
+                uppercase_letters += 1
+            elif char.islower():
+                lowercase_letters += 1
+            elif char.isdigit():
+                numbers += 1
+            elif char in strong_chars:
+                symbols += 1
+            else:
+                symbols += 1
+
+        score = 0
+        if uppercase_letters > 0:
+            score += 1
+        if lowercase_letters > 0:
+            score += 1
+        if numbers > 0:
+            score += 1
+        if symbols > 0:
+            score += 2
+
+        length = len(password)
+        if length >= 16:
+            score += 3
+        elif length >= 12:
+            score += 2
+        elif length >= 8:
+            score += 1
+
+        if score <= 3:
+            return "Weak"
+        elif 4 <= score <= 5:
+            return "Normal"
+        elif 6 <= score <= 7:
+            return "Strong"
+        else:
+            return "Very Strong"
+        
+    @staticmethod
+    def hash_password(password:str,file_path:str) -> Optional[bool]:
+        #   HASH A PASSWORD
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
+        try:
+            with open(file_path, "a") as file:
+                file.write(hashed_password + "\n")
+            return True
+        except OSError:
+            print("Passworder ERROR: Error saving hashed password!")
+            return False
+        
+    @staticmethod
+    def find_password(password: str, file_path: str):
+        try:
+            with open(file_path, "r") as file:
+                for line in file:
+                    if password in line:
+                        return Backend(password=password, found=True, data=line.strip())
+        except FileNotFoundError:
+            pass
+
+        return Backend(password=None, found=False)
+
+#   INTERNAL FUNCTIONS   
 def _avoid_repeats(password:str,max_repeat:int=3) -> bool:
     count = 1
     for i in range(1, len(password)):
@@ -344,7 +401,6 @@ def _avoid_repeats(password:str,max_repeat:int=3) -> bool:
         else:
             count = 1
     return True
-
 
 def _secure_shuffle(chars:Union[str,List[str]]) -> Union[str,List[str]]:
     is_string = isinstance(chars, str)
