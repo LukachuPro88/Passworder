@@ -5,22 +5,51 @@ import sys
 from argon2 import PasswordHasher, exceptions
 from typing import Union, List, Optional
 
+"""
+passworder.py
+
+Passworder is a Python package that has utilities for password management, generation,
+and security
+"""
+
+
+"""
+
+Global Constants
+
+"""
 UTF_8_UPPER = "ÄÖÅ"                                         #   CONSTANT
 UTF_8_LOWER = "äöå"                                         #   CONSTANT
 UTF_8_CHARS = UTF_8_UPPER + UTF_8_LOWER                     #   CONSTANT
-
+STRONG_CHARS = string.punctuation                           #   CONSTANT
 VOWELS = "AEIOUYÄÖÅaeiouyäöå"                               #   CONSTANT
 CONSONANTS = "BCDFGHJKLMNPQRSTVWXYZbcdfghjklmnpqrstvwxyz"   #   CONSTANT
 
+"""
+
+Platform-specific imports
+
+"""
 if sys.platform == "win32":
     import msvcrt   #   WINDOWS
 else:
     import tty      #   LINUX / MACOS
     import termios
 
-STRONG_CHARS = string.punctuation                           #   CONSTANT
+
+"""
+Random has tools for generating random passwords. 
+Random helps you cuustomize passwords to your liking.
+
+"""
 
 class Random:
+
+    """
+
+    string_password:
+        Generate a random password with letters only.
+    """
     @staticmethod
     def string_password(length:int, uppercase:bool=True, lowercase:bool=True,
                         symbols:bool=True, copy:bool=True, utf_8:bool=False,
@@ -76,7 +105,11 @@ class Random:
             pw_list = [_generate_one() for _ in range(batch_passwords)]
             return pw_list
     
-
+    """
+    
+    number_password:
+        Generate a random password with numbers only.
+    """
     @staticmethod
     def number_password(length:int, copy:bool=True, batch_passwords:int=1) -> Union[str,List[str]]:
         def _generate_one() -> str:
@@ -99,6 +132,11 @@ class Random:
             pw_list = [_generate_one() for _ in range(batch_passwords)]
             return pw_list
 
+    """
+    
+    password:
+        Generate a random password with letters, numbers, symbols, and utf-8 characters.
+    """
     @staticmethod
     def password(length:int, uppercase:bool=True, lowercase:bool=True,
                  symbols:bool=True,digits:bool=True,copy:bool=True,
@@ -155,7 +193,11 @@ class Random:
         else:
             return [_generate_one() for _ in range(batch_passwords)]
 
-
+    """
+    
+    pronouncable_password:
+        Generate a random pronouncable password.
+    """
     @staticmethod
     def pronouncable_password(length:int, uppercase:bool=True, lowercase:bool=True,
                               symbols:bool=True,digits:bool=True,copy:bool=True,
@@ -209,6 +251,11 @@ class Random:
         else:
             return [_generate_one() for _ in range(batch_passwords)]
         
+    """
+    
+    custom_password:
+        Generate a random password with custom characters only.
+    """
     @staticmethod
     def custom_password(custom_chars:Union[str,List[str]], length:int,
                         copy:bool=True, batch_passwords:int=1) -> Union[str,List[str]]:
@@ -234,12 +281,18 @@ class Random:
             pw_list = [_generate_one() for _ in range(batch_passwords)]
             return pw_list
 
+"""
+password_input:
+    Get a hidden password input from the user.
+"""
 def password_input(prompt:str="") -> str:
     #   GET A HIDDEN PASSWORD INPUT
     sys.stdout.write(prompt)
     sys.stdout.flush()
     password = ""
     if sys.platform == "win32":
+
+
 
         #   WINDOWS
         while True:
@@ -286,13 +339,29 @@ def password_input(prompt:str="") -> str:
             print()
         return password
 
+"""
+
+Backend class handles password hashing, finding, and brute-force protection.
+"""
 class Backend:
     #   BACKEND FUNCTIONS
+
+    """
+
+    __init__:
+        Initialize Backend with password, found status, and data.
+    """
     def __init__(self, password: Optional[str] = None, found: bool = True, data: Optional[str] = None):
         self.password = password
         self.found = found
         self.data = data
+        self.ph = PasswordHasher()
 
+    """
+    
+    brute_force_protection:
+        Implement brute-force protection by limiting password attempts.
+    """
     def brute_force_protection(self, max_attempts: int = 3):
         if not self.found or self.password is None:
             print("Password not found — brute force protection disabled.")
@@ -311,13 +380,21 @@ class Backend:
         print("Access Denied!")
         return self
 
+    """
+    
+    __str__:
+        String representation of Backend showing the password or "NOT FOUND".
+    """
     def __str__(self):
         return self.password if self.password is not None else "NOT FOUND"
 
-
+    """
+    
+    password_strength:
+        Evaluate the strength of a given password.
+    """
     @staticmethod
-    def password_strength(password:str) -> str:
-        #   CALCULATE PASSWORD STRENGTH
+    def password_strength(password: str) -> str:
         uppercase_letters = 0
         lowercase_letters = 0
         numbers = 0
@@ -366,30 +443,49 @@ class Backend:
         else:
             return "Very Strong"
         
-    @staticmethod
-    def hash_password(password:str, file_path:str) -> Optional[bool]:
-        #   HASH A PASSWORD
-        ph = PasswordHasher()
+
+    """
+
+    hash_password:
+        Hash a password and save it to a file.
+    """
+    def hash_password(self, password: str, file_path: str) -> Optional[bool]:
         try:
-            hashed_password = ph.hash(password)
+            hashed_password = self.ph.hash(password)
             with open(file_path, "a") as file:
                 file.write(hashed_password + "\n")
             return True
-        except OSError:
-            print("Passworder ERROR: Error saving hashed password!")
+        except (OSError, exceptions.HashingError) as e:
+            print(f"Passworder ERROR: Could not hash/save password! ({e})")
             return False
         
+    """
+
+    find_password:
+        Find a hashed password in a file.
+    """
     @staticmethod
-    def find_password(password: str, file_path: str):
+    def find_password(password: str, file_path: str) -> "Backend":
+        #   FIND A PASSWORD IN A FILE
+        ph = PasswordHasher()
         try:
             with open(file_path, "r") as file:
                 for line in file:
-                    if password in line:
-                        return Backend(password=password, found=True, data=line.strip())
+                    hashed = line.strip()
+                    try:
+                        if ph.verify(hashed, password):
+                            return Backend(password=password, found=True, data=hashed)
+                    except exceptions.VerifyMismatchError:
+                        continue
         except FileNotFoundError:
             pass
 
         return Backend(password=None, found=False)
+
+"""
+    Internal functions are my functions used within the modules code for tasks, 
+    that cant be accesed anywhere else than the modulle file.
+"""
 
 #   INTERNAL FUNCTIONS   
 def _avoid_repeats(password:str,max_repeat:int=3) -> bool:
