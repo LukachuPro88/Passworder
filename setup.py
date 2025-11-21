@@ -2,12 +2,13 @@ from setuptools import setup, find_packages
 
 setup(
     name="passworder",
-    version="0.0.3",
+    version="1.0.0",
     author="Luka Saarivirta",
     description="A lightweight password utilities library.",
     packages=find_packages(),
     install_requires=[
         "pyperclip",
+        "argon2-cffi",
     ],
     python_requires=">=3.7",
     classifiers=[
