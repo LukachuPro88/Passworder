@@ -2,15 +2,15 @@ import secrets
 import string
 import pyperclip
 import sys
-import hashlib
+from argon2 import PasswordHasher, exceptions
 from typing import Union, List, Optional
 
-utf_8_upper = "ÄÖÅ"
-utf_8_lower = "äöå"
-utf_8_chars = utf_8_upper + utf_8_lower
+UTF_8_UPPER = "ÄÖÅ"                                         #   CONSTANT
+UTF_8_LOWER = "äöå"                                         #   CONSTANT
+UTF_8_CHARS = UTF_8_UPPER + UTF_8_LOWER                     #   CONSTANT
 
-vowels = "aeiouyäöåAEIOUYÄÖÅ"
-consonants = "bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ"
+VOWELS = "AEIOUYÄÖÅaeiouyäöå"                               #   CONSTANT
+CONSONANTS = "BCDFGHJKLMNPQRSTVWXYZbcdfghjklmnpqrstvwxyz"   #   CONSTANT
 
 if sys.platform == "win32":
     import msvcrt   #   WINDOWS
@@ -18,7 +18,7 @@ else:
     import tty      #   LINUX / MACOS
     import termios
 
-strong_chars = string.punctuation
+STRONG_CHARS = string.punctuation                           #   CONSTANT
 
 class Random:
     @staticmethod
@@ -32,11 +32,11 @@ class Random:
             if uppercase:
                 chars += string.ascii_uppercase
                 if utf_8:
-                    chars += utf_8_upper
+                    chars += UTF_8_UPPER
             if lowercase:
                 chars += string.ascii_lowercase
                 if utf_8:
-                    chars += utf_8_lower
+                    chars += UTF_8_LOWER
             if symbols:
                 chars += string.punctuation
             if not chars:
@@ -44,13 +44,13 @@ class Random:
 
             password_chars = []
             if uppercase:
-                password_chars.append(secrets.choice(string.ascii_uppercase + (utf_8_upper if utf_8 else "")))
+                password_chars.append(secrets.choice(string.ascii_uppercase + (UTF_8_UPPER if utf_8 else "")))
             if lowercase:
-                password_chars.append(secrets.choice(string.ascii_lowercase + (utf_8_lower if utf_8 else "")))
+                password_chars.append(secrets.choice(string.ascii_lowercase + (UTF_8_LOWER if utf_8 else "")))
             if symbols:
                 password_chars.append(secrets.choice(string.punctuation))
             if utf_8:
-                password_chars.append(secrets.choice(utf_8_chars))
+                password_chars.append(secrets.choice(UTF_8_CHARS))
 
             remaining_length = max(length - len(password_chars), 0)
             for _ in range(remaining_length):
@@ -108,11 +108,11 @@ class Random:
             if uppercase:
                 chars += string.ascii_uppercase
                 if utf_8:
-                    chars += utf_8_upper
+                    chars += UTF_8_UPPER
             if lowercase:
                 chars += string.ascii_lowercase
                 if utf_8:
-                    chars += utf_8_lower
+                    chars += UTF_8_LOWER
             if symbols:
                 chars += string.punctuation
             if digits:
@@ -130,7 +130,7 @@ class Random:
             if symbols:
                 password_chars.append(secrets.choice(string.punctuation))
             if utf_8:
-                password_chars.append(secrets.choice(utf_8_chars))
+                password_chars.append(secrets.choice(UTF_8_CHARS))
 
             remaining_length = max(length - len(password_chars), 0)
             for _ in range(remaining_length):
@@ -168,17 +168,17 @@ class Random:
                 while len(password_chars) < length:
                     char_pool = ""
                     if use_consonant:
-                        char_pool = consonants
+                        char_pool = CONSONANTS
                         if utf_8 and uppercase:
-                            char_pool += utf_8_upper
+                            char_pool += UTF_8_UPPER
                         elif utf_8 and lowercase:
-                            char_pool += utf_8_lower
+                            char_pool += UTF_8_LOWER
                     else:
-                        char_pool = vowels
+                        char_pool = VOWELS
                         if utf_8 and uppercase:
-                            char_pool += utf_8_upper
+                            char_pool += UTF_8_UPPER
                         elif utf_8 and lowercase:
-                            char_pool += utf_8_lower
+                            char_pool += UTF_8_LOWER
 
                     if char_pool:
                         password_chars.append(secrets.choice(char_pool))
@@ -324,9 +324,9 @@ class Backend:
         symbols = 0
 
         for char in password:
-            if char in utf_8_upper:
+            if char in UTF_8_UPPER:
                 uppercase_letters += 1
-            elif char in utf_8_lower:
+            elif char in UTF_8_LOWER:
                 lowercase_letters += 1
             elif char.isupper():
                 uppercase_letters += 1
@@ -334,7 +334,7 @@ class Backend:
                 lowercase_letters += 1
             elif char.isdigit():
                 numbers += 1
-            elif char in strong_chars:
+            elif char in STRONG_CHARS:
                 symbols += 1
             else:
                 symbols += 1
@@ -367,10 +367,11 @@ class Backend:
             return "Very Strong"
         
     @staticmethod
-    def hash_password(password:str,file_path:str) -> Optional[bool]:
+    def hash_password(password:str, file_path:str) -> Optional[bool]:
         #   HASH A PASSWORD
-        hashed_password = hashlib.sha256(password.encode()).hexdigest()
+        ph = PasswordHasher()
         try:
+            hashed_password = ph.hash(password)
             with open(file_path, "a") as file:
                 file.write(hashed_password + "\n")
             return True
