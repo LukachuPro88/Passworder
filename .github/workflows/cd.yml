@@ -1,4 +1,3 @@
-# .github/workflows/cd.yml
 name: Python CD
 
 on:
