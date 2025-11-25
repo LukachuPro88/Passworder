@@ -13,6 +13,7 @@ Passworder is a Python library providing utilities for password generation, stre
 - Hash passwords and save them to a file (`hash_password`)
 - Check if a password exists in a hashed file (`find_password`)
 - Auto-copy passwords to clipboard via `pyperclip`
+- Protection from brute force attacks (`brute_force_protection`)
 
 ---
 
