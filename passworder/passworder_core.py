@@ -1,6 +1,5 @@
 import secrets
 import string
-import pyperclip
 import sys
 from argon2 import PasswordHasher, exceptions
 from typing import Union, List, Optional
@@ -54,6 +53,8 @@ class Random:
                         symbols:bool=True, copy:bool=True, utf_8:bool=False,
                         batch_passwords:int=1) -> Union[str,List[str]]:
 
+        import pyperclip
+
         def _generate_one() -> str:
             chars = ""
             if uppercase:
@@ -104,6 +105,8 @@ class Random:
 
     @staticmethod
     def number_password(length:int, copy:bool=True, batch_passwords:int=1) -> Union[str,List[str]]:
+        import pyperclip
+
         def _generate_one() -> str:
             while True:
                 password_chars = [str(secrets.randbelow(10)) for _ in range(length)]
@@ -127,6 +130,8 @@ class Random:
     def password(length:int, uppercase:bool=True, lowercase:bool=True,
                  symbols:bool=True,digits:bool=True,copy:bool=True,
                  utf_8:bool=False,batch_passwords:int=1) -> Union[str,List[str]]:
+
+        import pyperclip
 
         def _generate_one() -> str:
             chars = ""
@@ -185,6 +190,8 @@ class Random:
                               symbols:bool=True,digits:bool=True,copy:bool=True,
                               utf_8:bool=False,batch_passwords:int=1) -> Union[str,List[str]]:
 
+        import pyperclip
+
         def _generate_one() -> str:
             while True:
                 password_chars = []
@@ -242,6 +249,8 @@ class Random:
     def custom_password(custom_chars:Union[str,List[str]], length:int,
                         copy:bool=True, batch_passwords:int=1) -> Union[str,List[str]]:
         #   GENERATE A RANDOM PASSWORD WITH CUSTOM CHARACTERS ONLY
+
+        import pyperclip
 
         def _generate_one() -> str:
             while True:
