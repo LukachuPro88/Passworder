@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="passworder",
-    version="1.0.1",
+    version="1.0.2",
     author="Luka Saarivirta",
     description="A lightweight password utilities library.",
     packages=find_packages(),
