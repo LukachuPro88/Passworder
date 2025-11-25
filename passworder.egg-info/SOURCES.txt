@@ -1,7 +1,7 @@
 README.md
 setup.py
 passworder/__init__.py
-passworder/passworder.py
+passworder/passworder_core.py
 passworder/tests.py
 passworder.egg-info/PKG-INFO
 passworder.egg-info/SOURCES.txt

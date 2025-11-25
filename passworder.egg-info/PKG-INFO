@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: passworder
-Version: 0.0.3
+Version: 1.0.1
 Summary: A lightweight password utilities library.
 Author: Luka Saarivirta
 Classifier: Programming Language :: Python :: 3
@@ -8,6 +8,7 @@ Classifier: License :: OSI Approved :: MIT License
 Classifier: Operating System :: OS Independent
 Requires-Python: >=3.7
 Requires-Dist: pyperclip
+Requires-Dist: argon2-cffi
 Dynamic: author
 Dynamic: classifier
 Dynamic: requires-dist

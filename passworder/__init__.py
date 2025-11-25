@@ -1,4 +1,4 @@
-from .passworder import (
+from .passworder_core import (
     Random,
     Backend,
     password_input

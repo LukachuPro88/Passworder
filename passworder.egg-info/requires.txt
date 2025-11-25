@@ -1,1 +1,2 @@
 pyperclip
+argon2-cffi
