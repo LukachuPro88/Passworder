@@ -45,7 +45,7 @@ def test_bruteforce_success(monkeypatch):
 
 
 def ci():
-    #STRING_PASSWORD
+    # STRING_PASSWORD
     for length in lengths:
         for upper in uppercases:
             for lower in lowercases:
@@ -65,7 +65,7 @@ def ci():
                                     )
                                 assert isinstance(pw_string, str) or isinstance(pw_string, list)
 
-    #NUMBER_PASSWORD
+    # NUMBER_PASSWORD
     for length in lengths:
         for copy_flag in copy_flags:
             for batch in batch_numbers:
@@ -77,7 +77,7 @@ def ci():
                     )
                 assert isinstance(pw_num, str) or isinstance(pw_num, list)
 
-    #PASSWORD
+    # PASSWORD
     for length in lengths:
         for upper in uppercases:
             for lower in lowercases:
@@ -99,7 +99,7 @@ def ci():
                                         )
                                     assert isinstance(pw, str) or isinstance(pw, list)
 
-    #PRONOUNCEABLE_PASSWORD
+    # PRONOUNCEABLE_PASSWORD
     for length in lengths:
         for upper in uppercases:
             for lower in lowercases:
@@ -119,7 +119,7 @@ def ci():
                                     )
                                 assert isinstance(pw_pronoun, str) or isinstance(pw_pronoun, list)
 
-    #CUSTOM_PASSWORD
+    # CUSTOM_PASSWORD
     for char in custom_chars_list:
         for length in lengths:
             for copy_flag in copy_flags:
@@ -133,31 +133,33 @@ def ci():
                         )
                     assert isinstance(pw_custom, str) or isinstance(pw_custom, list)
 
-    #PASSWORD_INPUT
+    # PASSWORD_INPUT
     prompt = "Enter your password: "
     test_pw = "SuperSecret123!"
     result = password_input_mock(prompt=prompt, input_string=test_pw)
     assert result == test_pw
 
-    #HASH_PASSWORD
+    # HASH_PASSWORD
     test_pw = "SuperSecretPassword123!"
-    with tempfile.NamedTemporaryFile(mode="r+", delete=True) as tmp:
-        success = passworder.Backend.hash_password(test_pw, tmp.name)
-        assert success == True
+    with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
+        tmp_path = tmp.name
 
-        tmp.seek(0)
+    success = passworder.Backend.hash_password(test_pw, tmp_path)
+    assert success is True
+
+    with open(tmp_path, "r") as tmp:
         content = tmp.read().strip()
         assert len(content) > 0
         assert content != test_pw
 
-    #FIND_PASSWORD
-    test_pw = "SuperSecretPassword123"
-    with tempfile.NamedTemporaryFile(mode="r+", delete=True) as tmp:
-        passworder.Backend.hash_password(test_pw, tmp.name)
-        found_hash = passworder.Backend.find_password(test_pw, tmp.name)
-        assert found_hash is not None
-        assert isinstance(found_hash, str)
-        assert found_hash != test_pw
-        assert passworder.Backend.ph.verify(found_hash, test_pw) == True
+    # FIND_PASSWORD
+    test_pw2 = "SuperSecretPassword123"
+    passworder.Backend.hash_password(test_pw2, tmp_path)
+
+    found_hash = passworder.Backend.find_password(test_pw2, tmp_path)
+    assert found_hash is not None
+    assert isinstance(found_hash, str)
+    assert found_hash != test_pw2
+    assert passworder.Backend.ph.verify(found_hash, test_pw2) is True
 
 ci()
