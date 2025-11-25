@@ -1,3 +1,4 @@
+# .github/workflows/ci.yml
 name: Python CI
 
 on:
@@ -22,23 +23,34 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install dependencies
+      # Windows-specific dependency install
+      - name: Install dependencies (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: cmd
+        run: |
+          python -m venv venv
+          venv\Scripts\pip.exe install --upgrade pip
+          venv\Scripts\pip.exe install .
+
+      # Linux/macOS dependency install
+      - name: Install dependencies (Linux/macOS)
+        if: matrix.os != 'windows-latest'
         shell: bash
         run: |
           python -m venv venv
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            venv\Scripts\pip.exe install --upgrade pip
-            venv\Scripts\pip.exe install .
-          else
-            ./venv/bin/pip install --upgrade pip
-            ./venv/bin/pip install .
-          fi
+          ./venv/bin/pip install --upgrade pip
+          ./venv/bin/pip install .
 
-      - name: Run tests
+      # Windows-specific test run
+      - name: Run tests (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: cmd
+        run: |
+          venv\Scripts\python.exe tests\test_core.py
+
+      # Linux/macOS test run
+      - name: Run tests (Linux/macOS)
+        if: matrix.os != 'windows-latest'
         shell: bash
         run: |
-          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-            venv\Scripts\python.exe tests\test_core.py
-          else
-            ./venv/bin/python tests/test_core.py
-          fi
+          ./venv/bin/python tests/test_core.py
