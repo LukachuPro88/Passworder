@@ -1,3 +1,4 @@
+# .github/workflows/cd.yml
 name: Python CD
 
 on:
@@ -19,11 +20,19 @@ jobs:
         with:
           python-version: 3.11
 
-      - name: Install build tools
+      - name: Bump version
         run: |
-          python -m pip install --upgrade build twine
+          python version_bump.py
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add passworder/__init__.py
+          git commit -m "Bump patch version [skip ci]" || echo "No changes to commit"
+          git push origin main-clean
 
-      - name: Build and Publish
+      - name: Install build tools
+        run: python -m pip install --upgrade build twine
+
+      - name: Build and publish
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}

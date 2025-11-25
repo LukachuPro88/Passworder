@@ -1,0 +1,29 @@
+name: Version Bump + CI/CD
+
+on:
+  push:
+    branches: [ main-clean ]
+
+jobs:
+  bump-and-commit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      - name: Bump patch version
+        run: |
+          python version_bump.py  # your script file
+
+      - name: Commit version bump
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add passworder/__init__.py
+          git commit -m "Bump patch version [skip ci]" || echo "No changes to commit"
+          git push origin main-clean
