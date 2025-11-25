@@ -1,25 +1,26 @@
 # Passworder
 
-Passworder is a Python library providing utilities for password generation, strength checking, masked password input, hashing, and password verification.
+Passworder is a Python library for secure password generation, strength checking, masked input, hashing, and verification.
 
 ## ✨ Features
 
-- Generate random passwords
-  - Uppercase/lowercase/symbol combinations (`string_password`)
-  - Numbers only (`number_password`)
-  - Fully customizable strong passwords (`password`)
-- Password strength evaluation (`password_strength`)
-- Terminal masked password input (`password_input`)
-- Hash passwords and save them to a file (`hash_password`)
-- Check if a password exists in a hashed file (`find_password`)
-- Auto-copy passwords to clipboard via `pyperclip`
-- Protection from brute force attacks (`brute_force_protection`)
-
----
+- **Random Passwords**
+  - `string_password`: letters, numbers, symbols
+  - `number_password`: numbers only
+  - `password`: fully customizable strong passwords
+  - `pronounceable_password`: easy-to-remember passwords
+  - `custom_password`: use your own character set
+- **Password Utilities**
+  - `password_strength`: evaluate password strength
+  - `password_input`: terminal input with hidden characters
+  - `hash_password`: hash and save passwords to a file
+  - `find_password`: verify password presence in a file
+  - `brute_force_protection`: protect against multiple incorrect attempts
+  - Clipboard auto-copy support via `pyperclip`
 
 ## 📦 Installation
 
-Once published to PyPI, install with:
+Install from PyPI:
 
 ```bash
-pip install passworder  
+pip install passworder
