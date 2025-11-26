@@ -1,11 +1,13 @@
 from setuptools import setup, find_packages
+import re
 
 def read_version():
-    with open("passworder/__init__.py", "r") as f:
-        for line in f:
-            if line.startswith("__version__"):
-                return line.split("=")[1].strip().replace('"', "").replace("'", "")
-    raise RuntimeError("Version not found in __init__.py")
+    with open("passworder/__init__.py", "r", encoding="utf-8") as f:
+        content = f.read()
+    match = re.search(r'__version__\s*=\s*["\'](.+)["\']', content)
+    if not match:
+        raise RuntimeError("Version not found in __init__.py")
+    return match.group(1)
 
 setup(
     name="passworder",
