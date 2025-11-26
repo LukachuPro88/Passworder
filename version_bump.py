@@ -5,7 +5,6 @@ file_path = "passworder/__init__.py"
 with open(file_path, "r", encoding="utf-8") as f:
     content = f.read()
 
-# Etsi __version__ = "1.0.3"
 match = re.search(r'^__version__\s*=\s*["\'](\d+)\.(\d+)\.(\d+)["\']', content, re.MULTILINE)
 if match:
     major, minor, patch = map(int, match.groups())
