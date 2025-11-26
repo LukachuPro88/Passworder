@@ -36,8 +36,5 @@ jobs:
           pip install .
 
       - name: Run tests
+        shell: bash
         run: python -m unittest discover tests
-
-      - name: Notify on failure
-        if: failure()
-        run: echo "Tests failed! Check the logs."
