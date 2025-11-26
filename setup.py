@@ -1,17 +1,23 @@
 from setuptools import setup, find_packages
-from passworder import __version__
+
+def read_version():
+    with open("passworder/__init__.py", "r") as f:
+        for line in f:
+            if line.startswith("__version__"):
+                return line.split("=")[1].strip().replace('"', "").replace("'", "")
+    raise RuntimeError("Version not found in __init__.py")
 
 setup(
     name="passworder",
-    version=__version__,
+    version=read_version(),
     author="Luka Saarivirta",
     description="A lightweight password utilities library.",
     packages=find_packages(),
     install_requires=[
-        "pyperclip>=1.8.2",
-        "argon2-cffi>=23.1.0",
+        "pyperclip>=1.8",
+        "argon2-cffi>=23.1",
     ],
-    python_requires=">=3.11",
+    python_requires=">=3.7",
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
