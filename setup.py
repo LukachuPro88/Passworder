@@ -8,10 +8,10 @@ setup(
     description="A lightweight password utilities library.",
     packages=find_packages(),
     install_requires=[
-        "pyperclip",
-        "argon2-cffi",
+        "pyperclip>=1.8.2",
+        "argon2-cffi>=23.1.0",
     ],
-    python_requires=">=3.7",
+    python_requires=">=3.11",
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

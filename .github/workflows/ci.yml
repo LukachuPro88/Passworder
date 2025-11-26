@@ -17,10 +17,19 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/setup.py') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Install dependencies
         run: |
@@ -28,4 +37,9 @@ jobs:
           pip install .
 
       - name: Run tests
-        run: python -m unittest discover tests
+        run: |
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            python -m unittest discover tests
+          else
+            python -m unittest discover tests
+          fi
