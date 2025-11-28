@@ -3,6 +3,7 @@ import string
 import sys
 from argon2 import PasswordHasher, exceptions
 from typing import Union, List, Optional
+import os
 """
 passworder.py
 
@@ -478,14 +479,12 @@ def _secure_shuffle(chars:Union[str,List[str]]) -> Union[str,List[str]]:
 
     return "".join(lst) if is_string else lst
 
-
 def _check_common_passwords(password: str) -> bool:
+    data_path = os.path.join(os.path.dirname(__file__), "data/common_passwords_cleaned.txt")
     try:
-        with open("common_passwords_cleaned.txt", "r") as file:
+        with open(data_path, "r") as file:
             common_passwords = set(line.strip() for line in file if line.strip())
-
         return password.lower() in common_passwords
-
     except FileNotFoundError:
         print("common_passwords_cleaned.txt not found!")
         return False

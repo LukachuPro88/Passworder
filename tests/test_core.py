@@ -24,18 +24,19 @@ def password_input_mock(prompt: str = "", input_string: str = "") -> str:
     return input_string
 
 """
-Mck for _ceck_common_passwords
+Mock for _ceck_common_passwords
 """
-def _check_common_passwords(password: str) -> bool:
-    try:
-        with open("common_passwords_cleaned.txt", "r") as file:
-            common_passwords = set(line.strip() for line in file if line.strip())
+import tempfile
 
-        return password.lower() in common_passwords
+with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
+    tmp_path = tmp.name
+    for pw in ["12345", "0000", "abcdefg", "gjksdhfglkajhgf"]:
+        tmp.write(pw + "\n")
 
-    except FileNotFoundError:
-        print("common_passwords_cleaned.txt not found!")
-        return False
+def _check_common_passwords(password):
+    with open(tmp_path, "r") as f:
+        common_set = set(line.strip() for line in f if line.strip())
+    return password.lower() in common_set
 
 """
 Mock test for brute_force_protection
