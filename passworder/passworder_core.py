@@ -3,7 +3,7 @@ import string
 import sys
 from argon2 import PasswordHasher, exceptions
 from typing import Union, List, Optional
-
+import pandas as pd
 """
 passworder.py
 
@@ -48,147 +48,153 @@ class Random:
     string_password:
         Generate a random password with letters only.
     """
+
     @staticmethod
-    def string_password(length:int, uppercase:bool=True, lowercase:bool=True,
-                        symbols:bool=True, copy:bool=True, utf_8:bool=False,
-                        batch_passwords:int=1) -> Union[str,List[str]]:
+    def string_password(length: int, uppercase: bool = True, lowercase: bool = True,
+                        symbols: bool = True, copy: bool = True, utf_8: bool = False,
+                        batch_passwords: int = 1) -> Union[str, List[str]]:
+        #   GENERATE A RANDOM STRING PASSWORD
 
         import pyperclip
 
         def _generate_one() -> str:
-            chars = ""
-            if uppercase:
-                chars += string.ascii_uppercase
-                if utf_8:
-                    chars += UTF_8_UPPER
-            if lowercase:
-                chars += string.ascii_lowercase
-                if utf_8:
-                    chars += UTF_8_LOWER
-            if symbols:
-                chars += string.punctuation
-            if not chars:
-                chars = string.ascii_letters
-
-            password_chars = []
-            if uppercase:
-                password_chars.append(secrets.choice(string.ascii_uppercase + (UTF_8_UPPER if utf_8 else "")))
-            if lowercase:
-                password_chars.append(secrets.choice(string.ascii_lowercase + (UTF_8_LOWER if utf_8 else "")))
-            if symbols:
-                password_chars.append(secrets.choice(string.punctuation))
-            if utf_8:
-                password_chars.append(secrets.choice(UTF_8_CHARS))
-
-            remaining_length = max(length - len(password_chars), 0)
-            for _ in range(remaining_length):
-                password_chars.append(secrets.choice(chars))
-
             while True:
+                chars = ""
+                if uppercase:
+                    chars += string.ascii_uppercase
+                    if utf_8:
+                        chars += UTF_8_UPPER
+                if lowercase:
+                    chars += string.ascii_lowercase
+                    if utf_8:
+                        chars += UTF_8_LOWER
+                if symbols:
+                    chars += string.punctuation
+                if not chars:
+                    chars = string.ascii_letters
+
+                password_chars = []
+                if uppercase:
+                    password_chars.append(secrets.choice(string.ascii_uppercase + (UTF_8_UPPER if utf_8 else "")))
+                if lowercase:
+                    password_chars.append(secrets.choice(string.ascii_lowercase + (UTF_8_LOWER if utf_8 else "")))
+                if symbols:
+                    password_chars.append(secrets.choice(string.punctuation))
+                if utf_8:
+                    password_chars.append(secrets.choice(UTF_8_CHARS))
+
+                remaining_length = max(length - len(password_chars), 0)
+                for _ in range(remaining_length):
+                    password_chars.append(secrets.choice(chars))
+
                 password_chars = _secure_shuffle(password_chars)
-                if _avoid_repeats("".join(password_chars)):
+                password_str = "".join(password_chars)
+                if _avoid_repeats(password_str) and not _check_common_passwords(password_str):
                     break
 
-            return "".join(password_chars)
+            return password_str
 
-        if batch_passwords == 1:
-            pw = _generate_one()
-            if copy:
-                try:
-                    pyperclip.copy(pw)
-                    print("Copied!")
-                except pyperclip.PyperclipException:
-                    print("Error copying password!")
-            return pw
-        else:
-            return [_generate_one() for _ in range(batch_passwords)]
+        pw_list = [_generate_one() for _ in range(batch_passwords)]
+
+        if copy and batch_passwords == 1:
+            try:
+                pyperclip.copy(pw_list[0])
+                print("Copied!")
+            except pyperclip.PyperclipException:
+                print("Error copying password!")
+
+        return pw_list[0] if batch_passwords == 1 else pw_list
 
     @staticmethod
-    def number_password(length:int, copy:bool=True, batch_passwords:int=1) -> Union[str,List[str]]:
+    def number_password(length: int, copy: bool = True, batch_passwords: int = 1) -> Union[str, List[str]]:
+        #   GENERATE A RANDOM NUMBER PASSWORD
+
         import pyperclip
 
         def _generate_one() -> str:
             while True:
                 password_chars = [str(secrets.randbelow(10)) for _ in range(length)]
-                if _avoid_repeats("".join(password_chars)):
+                password_str = "".join(password_chars)
+                if _avoid_repeats(password_str) and not _check_common_passwords(password_str):
                     break
-            return "".join(password_chars)
+            return password_str
 
-        if batch_passwords == 1:
-            pw = _generate_one()
-            if copy:
-                try:
-                    pyperclip.copy(pw)
-                    print("Copied!")
-                except pyperclip.PyperclipException:
-                    print("Error copying password!")
-            return pw
-        else:
-            return [_generate_one() for _ in range(batch_passwords)]
+        pw_list = [_generate_one() for _ in range(batch_passwords)]
+
+        if copy and batch_passwords == 1:
+            try:
+                pyperclip.copy(pw_list[0])
+                print("Copied!")
+            except pyperclip.PyperclipException:
+                print("Error copying password!")
+
+        return pw_list[0] if batch_passwords == 1 else pw_list
 
     @staticmethod
-    def password(length:int, uppercase:bool=True, lowercase:bool=True,
-                 symbols:bool=True,digits:bool=True,copy:bool=True,
-                 utf_8:bool=False,batch_passwords:int=1) -> Union[str,List[str]]:
+    def password(length: int, uppercase: bool = True, lowercase: bool = True,
+                 symbols: bool = True, digits: bool = True, copy: bool = True,
+                 utf_8: bool = False, batch_passwords: int = 1) -> Union[str, List[str]]:
+        #   GENERATE A RANDOM PASSWORD WITH ALL OPTIONS
 
         import pyperclip
 
         def _generate_one() -> str:
-            chars = ""
-            if uppercase:
-                chars += string.ascii_uppercase
-                if utf_8:
-                    chars += UTF_8_UPPER
-            if lowercase:
-                chars += string.ascii_lowercase
-                if utf_8:
-                    chars += UTF_8_LOWER
-            if symbols:
-                chars += string.punctuation
-            if digits:
-                chars += string.digits
-            if not chars:
-                chars = string.ascii_letters
-
-            password_chars = []
-            if uppercase:
-                password_chars.append(secrets.choice(string.ascii_uppercase))
-            if lowercase:
-                password_chars.append(secrets.choice(string.ascii_lowercase))
-            if digits:
-                password_chars.append(secrets.choice(string.digits))
-            if symbols:
-                password_chars.append(secrets.choice(string.punctuation))
-            if utf_8:
-                password_chars.append(secrets.choice(UTF_8_CHARS))
-
-            remaining_length = max(length - len(password_chars), 0)
-            for _ in range(remaining_length):
-                password_chars.append(secrets.choice(chars))
-
             while True:
+                chars = ""
+                if uppercase:
+                    chars += string.ascii_uppercase
+                    if utf_8:
+                        chars += UTF_8_UPPER
+                if lowercase:
+                    chars += string.ascii_lowercase
+                    if utf_8:
+                        chars += UTF_8_LOWER
+                if symbols:
+                    chars += string.punctuation
+                if digits:
+                    chars += string.digits
+                if not chars:
+                    chars = string.ascii_letters
+
+                password_chars = []
+                if uppercase:
+                    password_chars.append(secrets.choice(string.ascii_uppercase))
+                if lowercase:
+                    password_chars.append(secrets.choice(string.ascii_lowercase))
+                if digits:
+                    password_chars.append(secrets.choice(string.digits))
+                if symbols:
+                    password_chars.append(secrets.choice(string.punctuation))
+                if utf_8:
+                    password_chars.append(secrets.choice(UTF_8_CHARS))
+
+                remaining_length = max(length - len(password_chars), 0)
+                for _ in range(remaining_length):
+                    password_chars.append(secrets.choice(chars))
+
                 password_chars = _secure_shuffle(password_chars)
-                if _avoid_repeats("".join(password_chars)):
+                password_str = "".join(password_chars)
+                if _avoid_repeats(password_str) and not _check_common_passwords(password_str):
                     break
 
-            return "".join(password_chars)
+            return password_str
 
-        if batch_passwords == 1:
-            pw = _generate_one()
-            if copy:
-                try:
-                    pyperclip.copy(pw)
-                    print("Copied!")
-                except pyperclip.PyperclipException:
-                    print("Passworder ERROR: Error copying password!")
-            return pw
-        else:
-            return [_generate_one() for _ in range(batch_passwords)]
+        pw_list = [_generate_one() for _ in range(batch_passwords)]
+
+        if copy and batch_passwords == 1:
+            try:
+                pyperclip.copy(pw_list[0])
+                print("Passworder ERROR: Error copying password!")
+            except pyperclip.PyperclipException:
+                print("Passworder ERROR: Error copying password!")
+
+        return pw_list[0] if batch_passwords == 1 else pw_list
 
     @staticmethod
-    def pronounceable_password(length:int, uppercase:bool=True, lowercase:bool=True,
-                              symbols:bool=True,digits:bool=True,copy:bool=True,
-                              utf_8:bool=False,batch_passwords:int=1) -> Union[str,List[str]]:
+    def pronounceable_password(length: int, uppercase: bool = True, lowercase: bool = True,
+                               symbols: bool = True, digits: bool = True, copy: bool = True,
+                               utf_8: bool = False, batch_passwords: int = 1) -> Union[str, List[str]]:
+        #   GENERATE A PRONOUNCEABLE PASSWORD
 
         import pyperclip
 
@@ -225,20 +231,19 @@ class Random:
                 password_chars = _secure_shuffle(password_chars)
                 password_str = "".join(password_chars[:length])
 
-                if _avoid_repeats(password_str):
+                if _avoid_repeats(password_str) and not _check_common_passwords(password_str):
                     return password_str
 
-        if batch_passwords == 1:
-            pw = _generate_one()
-            if copy:
-                try:
-                    pyperclip.copy(pw)
-                    print("Copied!")
-                except pyperclip.PyperclipException:
-                    print("Passworder ERROR: Error copying password!")
-            return pw
-        else:
-            return [_generate_one() for _ in range(batch_passwords)]
+        pw_list = [_generate_one() for _ in range(batch_passwords)]
+
+        if copy and batch_passwords == 1:
+            try:
+                pyperclip.copy(pw_list[0])
+                print("Passworder ERROR: Error copying password!")
+            except pyperclip.PyperclipException:
+                print("Passworder ERROR: Error copying password!")
+
+        return pw_list[0] if batch_passwords == 1 else pw_list
 
 
     """
@@ -246,10 +251,8 @@ class Random:
         Generate a random password with custom characters only.
     """
     @staticmethod
-    def custom_password(custom_chars:Union[str,List[str]], length:int,
-                        copy:bool=True, batch_passwords:int=1) -> Union[str,List[str]]:
-        #   GENERATE A RANDOM PASSWORD WITH CUSTOM CHARACTERS ONLY
-
+    def custom_password(custom_chars: Union[str, List[str]], length: int,
+                        copy: bool = True, batch_passwords: int = 1) -> Union[str, List[str]]:
         import pyperclip
 
         def _generate_one() -> str:
@@ -259,18 +262,24 @@ class Random:
                     break
             return "".join(password_chars)
 
-        if batch_passwords == 1:
+        pw_list = []
+        for _ in range(batch_passwords):
             pw = _generate_one()
-            if copy:
-                try:
-                    pyperclip.copy(pw)
-                    print("Copied!")
-                except pyperclip.PyperclipException:
-                    print("Passworder ERROR: Error copying password!")
-            return pw
-        else:
-            pw_list = [_generate_one() for _ in range(batch_passwords)]
-            return pw_list
+
+            while _check_common_passwords(pw):
+                pw = _generate_one()
+            pw_list.append(pw)
+
+        if copy and batch_passwords == 1:
+            try:
+                pyperclip.copy(pw_list[0])
+                print("Copied!")
+            except pyperclip.PyperclipException:
+                print("Passworder ERROR: Error copying password!")
+
+        return pw_list[0] if batch_passwords == 1 else pw_list
+
+
 """
 password_input:
     Get a hidden password input from the user.
@@ -469,3 +478,15 @@ def _secure_shuffle(chars:Union[str,List[str]]) -> Union[str,List[str]]:
         lst[i], lst[j] = lst[j], lst[i]
 
     return "".join(lst) if is_string else lst
+
+
+def _check_common_passwords(password: str) -> bool:
+    try:
+        with open("common_passwords_cleaned.txt", "r") as file:
+            common_passwords = set(line.strip() for line in file if line.strip())
+
+        return password.lower() in common_passwords
+
+    except FileNotFoundError:
+        print("common_passwords_cleaned.txt not found!")
+        return False
