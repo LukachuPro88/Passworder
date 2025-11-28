@@ -14,6 +14,8 @@ batch_numbers = [1, 2, 3]
 digits_flags = [True, False]
 custom_chars_list = ["abcdefg", "hijklmn"]
 
+common_passwords = ["12345", "0000", "abcdefg", "gjksdhfglkajhgf"]
+
 
 """
 Mock for password_input for CI
@@ -21,6 +23,19 @@ Mock for password_input for CI
 def password_input_mock(prompt: str = "", input_string: str = "") -> str:
     return input_string
 
+"""
+Mck for _ceck_common_passwords
+"""
+def _check_common_passwords(password: str) -> bool:
+    try:
+        with open("common_passwords_cleaned.txt", "r") as file:
+            common_passwords = set(line.strip() for line in file if line.strip())
+
+        return password.lower() in common_passwords
+
+    except FileNotFoundError:
+        print("common_passwords_cleaned.txt not found!")
+        return False
 
 """
 Mock test for brute_force_protection
@@ -141,7 +156,7 @@ def ci():
 
     # HASH_PASSWORD
     test_pw = "SuperSecretPassword123!"
-    with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
+    with tempfile.NamedTemporaryFile(mode="w+", delete=True) as tmp:
         tmp_path = tmp.name
 
     success = passworder.Backend.hash_password(test_pw, tmp_path)
@@ -161,5 +176,10 @@ def ci():
     assert isinstance(found_hash, str)
     assert found_hash != test_pw2
     assert passworder.Backend.ph.verify(found_hash, test_pw2) is True
+
+    # _CHECK_COMMON_PASSWORD
+    for i in range(len(common_passwords)):
+        pw = common_passwords[i]
+        assert _check_common_passwords(pw)
 
 ci()

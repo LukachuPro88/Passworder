@@ -3,7 +3,6 @@ import string
 import sys
 from argon2 import PasswordHasher, exceptions
 from typing import Union, List, Optional
-import pandas as pd
 """
 passworder.py
 
