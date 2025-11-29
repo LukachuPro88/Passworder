@@ -13,15 +13,28 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Check if passworder_core.py changed
+        id: check_file
+        run: |
+          git fetch origin main
+          if git diff --name-only origin/main ${{ github.sha }} | grep -q 'home/js/Downloads/projects/python/Passworder/passworder/passworder_core.py'; then
+            echo "changed=true" >> $GITHUB_ENV
+          else
+            echo "changed=false" >> $GITHUB_ENV
+          fi
+
       - name: Set up Python
+        if: env.changed == 'true'
         uses: actions/setup-python@v4
         with:
           python-version: 3.11
 
       - name: Bump patch version
+        if: env.changed == 'true'
         run: python version_bump.py
 
       - name: Commit version bump
+        if: env.changed == 'true'
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
