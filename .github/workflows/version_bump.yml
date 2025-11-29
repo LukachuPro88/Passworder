@@ -5,7 +5,7 @@ on:
     workflows: ["Python CI"]
     types:
       - completed
-    branches: [ "main-clean" ]
+    branches: ["main-clean"]
 
 jobs:
   bump-and-commit:
@@ -18,27 +18,27 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check if passworder_core.py changed
-        id: check_file
+        id: check_changes
         run: |
           git fetch origin main-clean
-          if git diff --name-only origin/main-clean ${{ github.event.workflow_run.head_sha }} | grep -q 'passworder/passworder_core.py'; then
-            echo "changed=true" >> $GITHUB_ENV
+          changed=$(git diff --name-only origin/main-clean $GITHUB_SHA | grep 'passworder/passworder_core.py' || true)
+          if [ -n "$changed" ]; then
+            echo "core_changed=true" >> $GITHUB_OUTPUT
           else
-            echo "changed=false" >> $GITHUB_ENV
-          fi
+            echo "core_changed=false" >> $GITHUB_OUTPUT
 
       - name: Set up Python
-        if: env.changed == 'true'
+        if: steps.check_changes.outputs.core_changed == 'true'
         uses: actions/setup-python@v4
         with:
           python-version: 3.11
 
       - name: Bump patch version
-        if: env.changed == 'true'
+        if: steps.check_changes.outputs.core_changed == 'true'
         run: python version_bump.py
 
       - name: Commit version bump
-        if: env.changed == 'true'
+        if: steps.check_changes.outputs.core_changed == 'true'
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
