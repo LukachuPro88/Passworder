@@ -1,4 +1,4 @@
-__version__ = "1.0.7"
+__version__ = "1.0.8"
 
 from .passworder_core import Random, Backend, password_input
 
