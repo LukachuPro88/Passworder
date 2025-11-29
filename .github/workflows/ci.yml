@@ -2,7 +2,7 @@ name: Python CI
 
 on:
   push:
-    branches: [ main-clean, tests-update ]
+    branches: [ main-clean, workflow-update ]
   pull_request:
     branches: [ main-clean ]
 
