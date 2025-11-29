@@ -9,7 +9,7 @@ on:
 
 jobs:
   deploy:
-    if: ${{ github.event.workflow_run.head_branch == 'main-clean' && github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main-clean' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -21,21 +21,21 @@ jobs:
         id: check_file
         run: |
           git fetch origin main
-          if git diff --name-only origin/main ${{ github.event.workflow_run.head_sha }} | grep -q 'home/js/Downloads/projects/python/Passworder/passworder/passworder_core.py'; then
+          if git diff --name-only origin/main ${{ github.event.workflow_run.head_sha }} | grep -q 'passworder/passworder_core.py'; then
             echo "changed=true" >> $GITHUB_ENV
           else
             echo "changed=false" >> $GITHUB_ENV
           fi
 
-      - name: Set up Python
-        if: env.changed == 'true'
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.11
-
-      - name: Bump version
+      - name: Deploy steps
         if: env.changed == 'true'
         run: |
+          echo "Deploying because passworder_core.py changed!"
+
+          # Set up Python
+          python -m pip install --upgrade pip
+
+          # Bump version
           python version_bump.py
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
@@ -44,15 +44,11 @@ jobs:
           git pull --rebase
           git push origin main-clean
 
-      - name: Install build tools
-        if: env.changed == 'true'
-        run: python -m pip install --upgrade build twine
+          # Install build tools
+          python -m pip install --upgrade build twine
 
-      - name: Build and publish
-        if: env.changed == 'true'
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-        run: |
+          # Build and publish
           python -m build
-          python -m twine upload dist/*
+          python -m twine upload dist/* \
+            --username __token__ \
+            --password ${{ secrets.PYPI_TOKEN }}
