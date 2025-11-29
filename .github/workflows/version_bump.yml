@@ -20,8 +20,8 @@ jobs:
       - name: Check if passworder_core.py changed
         id: check_file
         run: |
-          git fetch origin main
-          if git diff --name-only origin/main ${{ github.event.workflow_run.head_sha }} | grep -q 'passworder/passworder_core.py'; then
+          git fetch origin main-clean
+          if git diff --name-only origin/main-clean ${{ github.event.workflow_run.head_sha }} | grep -q 'passworder/passworder_core.py'; then
             echo "changed=true" >> $GITHUB_ENV
           else
             echo "changed=false" >> $GITHUB_ENV
