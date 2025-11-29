@@ -21,12 +21,18 @@ jobs:
         id: check_file
         run: |
           git fetch origin main-clean
-          BASE=$(git merge-base origin/main-clean ${{ github.event.workflow_run.head_sha }})
-          if git diff --name-only $BASE ${{ github.event.workflow_run.head_sha }} | grep -q 'passworder/passworder_core.py'; then
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }})
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+
+          if echo "$CHANGED_FILES" | grep -qx 'passworder/passworder_core.py'; then
             echo "changed=true" >> $GITHUB_ENV
           else
             echo "changed=false" >> $GITHUB_ENV
           fi
+
+      - name: Debug changed flag
+        run: echo "changed = ${{ env.changed }}"
 
       - name: Deploy steps
         if: env.changed == 'true'
