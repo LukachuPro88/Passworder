@@ -16,12 +16,24 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Check if passworder_core.py changed
+        id: check_file
+        run: |
+          git fetch origin main
+          if git diff --name-only origin/main ${{ github.event.workflow_run.head_sha }} | grep -q 'home/js/Downloads/projects/python/Passworder/passworder/passworder_core.py'; then
+            echo "changed=true" >> $GITHUB_ENV
+          else
+            echo "changed=false" >> $GITHUB_ENV
+          fi
+
       - name: Set up Python
+        if: env.changed == 'true'
         uses: actions/setup-python@v4
         with:
           python-version: 3.11
 
       - name: Bump version
+        if: env.changed == 'true'
         run: |
           python version_bump.py
           git config --global user.name "GitHub Actions"
@@ -32,9 +44,11 @@ jobs:
           git push origin main-clean
 
       - name: Install build tools
+        if: env.changed == 'true'
         run: python -m pip install --upgrade build twine
 
       - name: Build and publish
+        if: env.changed == 'true'
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
